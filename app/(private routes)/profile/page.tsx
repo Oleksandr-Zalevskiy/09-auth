@@ -1,74 +1,51 @@
-"use client";
-
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useMutation } from "@tanstack/react-query";
-
-import { login } from "@/lib/api/clientApi";
-import { useAuthStore } from "@/lib/store/authStore";
+import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
+import { getMe } from "../../../lib/api/serverApi";
 import css from "./ProfilePage.module.css";
 
-export default function SignInPage() {
-  const router = useRouter();
-  const setUser = useAuthStore((s) => s.setUser);
+const SITE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
+const OG_IMAGE = "https://ac.goit.global/fullstack/react/notehub-og-meta.jpg";
 
-  const [error, setError] = useState("");
+export const metadata: Metadata = {
+  title: "Profile | NoteHub",
+  description: "User profile page in NoteHub.",
+  openGraph: {
+    title: "Profile | NoteHub",
+    description: "User profile page in NoteHub.",
+    url: `${SITE_URL}/profile`,
+    images: [{ url: OG_IMAGE }],
+  },
+};
 
-  const mutation = useMutation({
-    mutationFn: login,
-    onSuccess: (user) => {
-      setUser(user);
-      router.push("/profile");
-    },
-    onError: () => {
-      setError("Login failed.");
-    },
-  });
-
-  const handleSubmit = (formData: FormData) => {
-    setError("");
-
-    const email = String(formData.get("email") || "");
-    const password = String(formData.get("password") || "");
-
-    mutation.mutate({ email, password });
-  };
+export default async function ProfilePage() {
+  const user = await getMe();
 
   return (
     <main className={css.mainContent}>
-      <form action={handleSubmit} className={css.form}>
-        <h1 className={css.formTitle}>Sign in</h1>
+      <div className={css.profileCard}>
+        <div className={css.header}>
+          <h1 className={css.formTitle}>Profile Page</h1>
+          <Link href="/profile/edit" className={css.editProfileButton}>
+            Edit Profile
+          </Link>
+        </div>
 
-        <div className={css.formGroup}>
-          <label htmlFor="email">Email</label>
-          <input
-            id="email"
-            type="email"
-            name="email"
-            className={css.input}
-            required
+        <div className={css.avatarWrapper}>
+          <Image
+            src={user.avatar}
+            alt="User Avatar"
+            width={120}
+            height={120}
+            className={css.avatar}
           />
         </div>
 
-        <div className={css.formGroup}>
-          <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            type="password"
-            name="password"
-            className={css.input}
-            required
-          />
+        <div className={css.profileInfo}>
+          <p>Username: {user.username}</p>
+          <p>Email: {user.email}</p>
         </div>
-
-        <div className={css.actions}>
-          <button type="submit" className={css.submitButton}>
-            Log in
-          </button>
-        </div>
-
-        {error && <p className={css.error}>{error}</p>}
-      </form>
+      </div>
     </main>
   );
 }
