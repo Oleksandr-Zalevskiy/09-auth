@@ -1,33 +1,53 @@
-"use client";
+import type { Metadata } from "next";
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+} from "@tanstack/react-query";
 
-import { useQuery } from "@tanstack/react-query";
-import { fetchNoteById } from "@/lib/api/clientApi";
-import css from "./NoteDetails.module.css";
+import NotesClient from "./Notes.client";
+import { fetchNotes } from "../../../../../lib/api/serverApi";
+import type { NoteTag } from "../../../../../types/note";
 
-export default function NoteDetailsClient({ id }: { id: string }) {
-  const {
-    data: note,
-    isLoading,
-    isError,
-  } = useQuery({
-    queryKey: ["note", id],
-    queryFn: () => fetchNoteById(id),
-    refetchOnMount: false,
+const SITE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
+const OG_IMAGE = "https://ac.goit.global/fullstack/react/notehub-og-meta.jpg";
+
+interface Props {
+  params: Promise<{ slug?: string[] }>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const currentTag = slug?.[0] ?? "all";
+
+  return {
+    title: `Notes | ${currentTag}`,
+    description: `Browse your notes filtered by ${currentTag}.`,
+    openGraph: {
+      title: `Notes | ${currentTag}`,
+      description: `Browse your notes filtered by ${currentTag}.`,
+      url: `${SITE_URL}/notes/filter/${currentTag}`,
+      images: [{ url: OG_IMAGE }],
+    },
+  };
+}
+
+export default async function FilterPage({ params }: Props) {
+  const { slug } = await params;
+
+  const initialTag = slug?.[0] ?? "all";
+  const tag = initialTag === "all" ? undefined : (initialTag as NoteTag);
+
+  const queryClient = new QueryClient();
+
+  await queryClient.prefetchQuery({
+    queryKey: ["notes", 1, "", tag],
+    queryFn: () => fetchNotes(1, "", tag),
   });
 
-  if (isLoading) return <p>Loading, please wait...</p>;
-  if (isError || !note) return <p>Something went wrong.</p>;
-
   return (
-    <div className={css.container}>
-      <div className={css.item}>
-        <div className={css.header}>
-          <h2>{note.title}</h2>
-        </div>
-        <p className={css.tag}>{note.tag}</p>
-        <p className={css.content}>{note.content}</p>
-        <p className={css.date}>{new Date(note.createdAt).toLocaleString()}</p>
-      </div>
-    </div>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <NotesClient initialTag={initialTag} />
+    </HydrationBoundary>
   );
 }

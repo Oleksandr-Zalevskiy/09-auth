@@ -6,9 +6,9 @@ import {
 } from "@tanstack/react-query";
 
 import NoteDetailsClient from "./NoteDetails.client";
-import { fetchNoteById } from "@/lib/api";
+import { fetchNoteById } from "../../../../lib/api/serverApi";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const SITE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
 const OG_IMAGE = "https://ac.goit.global/fullstack/react/notehub-og-meta.jpg";
 
 interface Props {
@@ -17,7 +17,6 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
-
   const note = await fetchNoteById(id);
 
   const title = note.title;
