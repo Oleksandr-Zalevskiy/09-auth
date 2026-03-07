@@ -5,9 +5,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
-import { getMe, updateMe } from "@/lib/api/clientApi";
-import { useAuthStore } from "@/lib/store/authStore";
-import css from "../edit/EditProfilePage.module.css";
+import { getMe, updateMe } from "../../../../lib/api/clientApi";
+import { useAuthStore } from "../../../../lib/store/authStore";
+import css from "./EditProfilePage.module.css";
 
 export default function EditProfilePage() {
   const router = useRouter();

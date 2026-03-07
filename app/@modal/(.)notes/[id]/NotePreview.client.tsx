@@ -1,50 +1,62 @@
 "use client";
 
-import Link from "next/link";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { deleteNote } from "../../lib/api/clientApi";
-import { Note } from "../../types/note";
-import css from "./NoteList.module.css";
+import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { fetchNoteById } from "../../../../lib/api/clientApi";
+import Modal from "../../../../components/Modal/Modal";
+import css from "./NotePreview.module.css";
 
-interface NoteListProps {
-  notes: Note[];
+interface NotePreviewClientProps {
+  id: string;
 }
 
-export default function NoteList({ notes }: NoteListProps) {
-  const queryClient = useQueryClient();
+export default function NotePreviewClient({ id }: NotePreviewClientProps) {
+  const router = useRouter();
 
-  const mutation = useMutation({
-    mutationFn: deleteNote,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
-    },
+  const handleClose = () => {
+    router.back();
+  };
+
+  const {
+    data: note,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["note", id],
+    queryFn: () => fetchNoteById(id),
+    refetchOnMount: false,
   });
 
   return (
-    <ul className={css.list}>
-      {notes.map((note) => (
-        <li key={note.id} className={css.listItem}>
-          <h2 className={css.title}>{note.title}</h2>
-          <p className={css.content}>{note.content}</p>
+    <Modal onClose={handleClose}>
+      <div className={css.container}>
+        {isLoading && <div className={css.loading}>Loading...</div>}
 
-          <div className={css.footer}>
-            <span className={css.tag}>{note.tag}</span>
+        {isError && <div className={css.error}>Failed to load note data.</div>}
 
-            <div className={css.actions}>
-              <Link href={`/notes/${note.id}`} className={css.link}>
-                View details
-              </Link>
+        {note && (
+          <div className={css.item}>
+            <div className={css.header}>
+              <h2 className={css.title}>{note.title}</h2>
               <button
-                className={css.button}
-                onClick={() => mutation.mutate(note.id)}
-                disabled={mutation.isPending}
-                type="button">
-                {mutation.isPending ? "..." : "Delete"}
+                type="button"
+                className={css.backBtn}
+                onClick={handleClose}>
+                Close
               </button>
             </div>
+
+            <div className={css.content}>{note.content}</div>
+
+            <div className={css.footer}>
+              <div className={css.tag}>{note.tag}</div>
+              <div className={css.date}>
+                {new Date(note.createdAt).toLocaleDateString()}
+              </div>
+            </div>
           </div>
-        </li>
-      ))}
-    </ul>
+        )}
+      </div>
+    </Modal>
   );
 }

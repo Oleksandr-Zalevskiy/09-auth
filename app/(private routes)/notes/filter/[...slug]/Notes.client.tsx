@@ -5,23 +5,23 @@ import { useEffect, useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useDebouncedCallback } from "use-debounce";
 
-import { fetchNotes } from "@/lib/api";
-import NoteList from "@/components/NoteList/NoteList";
-import SearchBox from "@/components/SearchBox/SearchBox";
-import Pagination from "@/components/Pagination/Pagination";
 import { fetchNotes } from "../../../../../lib/api/clientApi";
+import NoteList from "../../../../../components/NoteList/NoteList";
+import SearchBox from "../../../../../components/SearchBox/SearchBox";
+import Pagination from "../../../../../components/Pagination/Pagination";
+import type { NoteTag } from "../../../../../types/note";
 
 import css from "./Notes.client.module.css";
 
 interface NotesClientProps {
-  initialTag: string; // "all" | "Todo" | "Work" ...
+  initialTag: string;
 }
 
 export default function NotesClient({ initialTag }: NotesClientProps) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
 
-  const tag = initialTag === "all" ? undefined : initialTag;
+  const tag = initialTag === "all" ? undefined : (initialTag as NoteTag);
 
   useEffect(() => {
     setPage(1);
