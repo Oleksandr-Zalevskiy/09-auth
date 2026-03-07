@@ -5,25 +5,23 @@ import {
   QueryClient,
 } from "@tanstack/react-query";
 
-import NoteDetailsClient from "./NoteDetails.client";
-import { fetchNoteById } from "../../../../lib/api/serverApi";
+import NotesClient from "./Notes.client";
+import { fetchNotes } from "../../../../../lib/api/clientApi";
+import type { NoteTag } from "../../../../../types/note";
 
 const SITE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
 const OG_IMAGE = "https://ac.goit.global/fullstack/react/notehub-og-meta.jpg";
 
 interface Props {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug?: string[] }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params;
-  const note = await fetchNoteById(id);
+  const { slug } = await params;
+  const currentTag = slug?.[0] ?? "all";
 
-  const title = note.title;
-  const description =
-    note.content.length > 120
-      ? `${note.content.slice(0, 120)}...`
-      : note.content;
+  const title = `Notes | ${currentTag}`;
+  const description = `Browse your notes filtered by ${currentTag}.`;
 
   return {
     title,
@@ -31,25 +29,28 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title,
       description,
-      url: `${SITE_URL}/notes/${id}`,
+      url: `${SITE_URL}/notes/filter/${currentTag}`,
       images: [{ url: OG_IMAGE }],
     },
   };
 }
 
-export default async function NoteDetailsPage({ params }: Props) {
-  const { id } = await params;
+export default async function FilterPage({ params }: Props) {
+  const { slug } = await params;
+
+  const initialTag = slug?.[0] ?? "all";
+  const tag = initialTag === "all" ? undefined : (initialTag as NoteTag);
 
   const queryClient = new QueryClient();
 
   await queryClient.prefetchQuery({
-    queryKey: ["note", id],
-    queryFn: () => fetchNoteById(id),
+    queryKey: ["notes", 1, "", tag],
+    queryFn: () => fetchNotes(1, "", tag),
   });
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <NoteDetailsClient id={id} />
+      <NotesClient initialTag={initialTag} />
     </HydrationBoundary>
   );
 }

@@ -3,38 +3,12 @@ import {
   HydrationBoundary,
   QueryClient,
 } from "@tanstack/react-query";
-import type { Metadata } from "next";
 
-import { fetchNoteById } from "@/lib/api";
-import NotePreviewClient from "@/components/NotePreview/NotePreview";
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-const OG_IMAGE = "https://ac.goit.global/fullstack/react/notehub-og-meta.jpg";
+import { fetchNoteById } from "../../../../lib/api/serverApi";
+import NotePreviewClient from "../../../../components/NotePreview/NotePreview";
 
 interface Props {
   params: Promise<{ id: string }>;
-}
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params;
-  const note = await fetchNoteById(id);
-
-  const title = note.title;
-  const description =
-    note.content.length > 120
-      ? `${note.content.slice(0, 120)}...`
-      : note.content;
-
-  return {
-    title,
-    description,
-    openGraph: {
-      title,
-      description,
-      url: `${SITE_URL}/notes/${id}`,
-      images: [{ url: OG_IMAGE }],
-    },
-  };
 }
 
 export default async function NotePreviewPage({ params }: Props) {

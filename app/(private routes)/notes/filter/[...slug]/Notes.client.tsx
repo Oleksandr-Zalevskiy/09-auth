@@ -1,74 +1,55 @@
-"use client";
+import type { Metadata } from "next";
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+} from "@tanstack/react-query";
 
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { useDebouncedCallback } from "use-debounce";
-
-import { fetchNotes } from "../../../../../lib/api/clientApi";
-import NoteList from "../../../../../components/NoteList/NoteList";
-import SearchBox from "../../../../../components/SearchBox/SearchBox";
-import Pagination from "../../../../../components/Pagination/Pagination";
+import { fetchNoteById } from "../../../../lib/api/clientApi";
 import type { NoteTag } from "../../../../../types/note";
 
-import css from "./Notes.client.module.css";
+const SITE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
+const OG_IMAGE = "https://ac.goit.global/fullstack/react/notehub-og-meta.jpg";
 
-interface NotesClientProps {
-  initialTag: string;
+interface Props {
+  params: Promise<{ slug?: string[] }>;
 }
 
-export default function NotesClient({ initialTag }: NotesClientProps) {
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const currentTag = slug?.[0] ?? "all";
 
+  const title = `Notes | ${currentTag}`;
+  const description = `Browse your notes filtered by ${currentTag}.`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `${SITE_URL}/notes/filter/${currentTag}`,
+      images: [{ url: OG_IMAGE }],
+    },
+  };
+}
+
+export default async function FilterPage({ params }: Props) {
+  const { slug } = await params;
+
+  const initialTag = slug?.[0] ?? "all";
   const tag = initialTag === "all" ? undefined : (initialTag as NoteTag);
 
-  useEffect(() => {
-    setPage(1);
-    setSearch("");
-  }, [initialTag]);
+  const queryClient = new QueryClient();
 
-  const { data, isLoading, isFetching } = useQuery({
-    queryKey: ["notes", page, search, tag],
-    queryFn: () => fetchNotes(page, search, tag),
-    placeholderData: keepPreviousData,
+  await queryClient.prefetchQuery({
+    queryKey: ["notes", 1, "", tag],
+    queryFn: () => fetchNotes(1, "", tag),
   });
 
-  const handleSearch = useDebouncedCallback((value: string) => {
-    setSearch(value);
-    setPage(1);
-  }, 500);
-
   return (
-    <div className={css.app}>
-      <header className={css.toolbar}>
-        <SearchBox onChange={handleSearch} />
-
-        {data && data.totalPages > 1 && (
-          <Pagination
-            currentPage={page}
-            totalPages={data.totalPages}
-            onPageChange={setPage}
-          />
-        )}
-
-        <Link className={css.button} href="/notes/action/create">
-          Create note +
-        </Link>
-      </header>
-
-      <main>
-        {isLoading ? (
-          <p className={css.statusMessage}>Loading notes...</p>
-        ) : data && data.notes.length > 0 ? (
-          <>
-            {isFetching && <p className={css.statusMessage}>Updating...</p>}
-            <NoteList notes={data.notes} />
-          </>
-        ) : (
-          <p className={css.statusMessage}>No notes found</p>
-        )}
-      </main>
-    </div>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <NotesClient initialTag={initialTag} />
+    </HydrationBoundary>
   );
 }

@@ -1,16 +1,29 @@
-import css from "./layout-notes.module.css";
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+} from "@tanstack/react-query";
 
-export default function FilterLayout({
-  children,
-  sidebar,
-}: {
-  children: React.ReactNode;
-  sidebar: React.ReactNode;
-}) {
+import { fetchNoteById } from "../../../../lib/api/serverApi";
+import NotePreviewClient from "../../../../components/NotePreview/NotePreview";
+
+interface Props {
+  params: Promise<{ id: string }>;
+}
+
+export default async function NotePreviewPage({ params }: Props) {
+  const { id } = await params;
+
+  const queryClient = new QueryClient();
+
+  await queryClient.prefetchQuery({
+    queryKey: ["note", id],
+    queryFn: () => fetchNoteById(id),
+  });
+
   return (
-    <div className={css.container}>
-      <aside className={css.sidebar}>{sidebar}</aside>
-      <div className={css.notesWrapper}>{children}</div>
-    </div>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <NotePreviewClient id={id} />
+    </HydrationBoundary>
   );
 }
