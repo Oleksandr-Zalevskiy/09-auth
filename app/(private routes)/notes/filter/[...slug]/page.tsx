@@ -6,7 +6,7 @@ import {
 } from "@tanstack/react-query";
 
 import NotesClient from "./Notes.client";
-import { fetchNotes } from "../../../../../lib/api/clientApi";
+import { fetchNotes } from "../../../../../lib/api/serverApi";
 import type { NoteTag } from "../../../../../types/note";
 
 const SITE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
