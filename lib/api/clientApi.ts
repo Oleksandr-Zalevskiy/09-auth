@@ -1,7 +1,6 @@
 import { api } from "./api";
-import { Note } from "@/types/note";
-import { User } from "@/types/user";
-import type { NoteTag } from "@/types/note";
+import type { Note, NoteTag } from "../../types/note";
+import type { User } from "../../types/user";
 
 export interface FetchNotesResponse {
   notes: Note[];
@@ -23,10 +22,7 @@ export const register = async (payload: AuthPayload): Promise<User> => {
   return data;
 };
 
-export const login = async (payload: {
-  email: string;
-  password: string;
-}): Promise<User> => {
+export const login = async (payload: AuthPayload): Promise<User> => {
   const { data } = await api.post<User>("/auth/login", payload);
   return data;
 };

@@ -1,8 +1,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { NoteTag } from "@/types/note";
+import type { NoteTag } from "../../types/note";
 
-export const initialDraft: {
+https: export const initialDraft: {
   title: string;
   content: string;
   tag: NoteTag;
