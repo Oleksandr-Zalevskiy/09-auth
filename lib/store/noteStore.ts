@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { NoteTag } from "../../types/note";
 
-https: export const initialDraft: {
+export const initialDraft: {
   title: string;
   content: string;
   tag: NoteTag;
@@ -30,6 +30,8 @@ export const useNoteStore = create<NoteStore>()(
         })),
       clearDraft: () => set({ draft: initialDraft }),
     }),
-    { name: "note-draft" },
+    {
+      name: "note-draft",
+    },
   ),
 );
